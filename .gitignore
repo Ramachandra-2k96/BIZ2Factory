@@ -1,1 +1,30 @@
-venv
+# Django specific
+*.log
+*.pot
+*.pyc
+__pycache__/
+db.sqlite3
+media
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+
+# Migrations
+*/migrations/*
+
+# Static files
+staticfiles/
+
+# Local settings
+local_settings.py
