@@ -1,131 +1,78 @@
 {% extends 'MainApp/base.html' %}
 
-{% block title %}Sign Up - SME Connect{% endblock %}
+{% block title %}Sign Up - Biz2factory{% endblock %}
 
 {% block content %}
+<div class="container mt-5 pt-4"></div>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card shadow-lg">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Join SME Connect</h3>
+                    <h3 class="mb-0">Join Biz2factory</h3>
                 </div>
                 <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" id="signupForm">
+                    <!-- Role Selection -->
+                    <div id="role-selection">
+                        <h4 class="mb-4">Select Your Role</h4>
+                        <div class="role-options">
+                            <div class="role-option">
+                                <input type="radio" name="role" value="seller" id="role_seller" class="role-radio" required>
+                                <label for="role_seller" class="role-label">
+                                    <i class="fas fa-store fa-2x mb-2"></i>
+                                    <span>Seller</span>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" name="role" value="company" id="role_company" class="role-radio">
+                                <label for="role_company" class="role-label">
+                                    <i class="fas fa-building fa-2x mb-2"></i>
+                                    <span>Company</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seller Form -->
+                    <form method="post" enctype="multipart/form-data" id="sellerForm" class="d-none">
                         {% csrf_token %}
-                        
-                        <!-- Step indicators -->
-                        <div class="progress mb-4">
-                            <div class="progress-bar" role="progressbar" style="width: 25%" id="progressBar"></div>
+                        <input type="hidden" name="role" value="seller">
+                        <h4 class="mb-4">Seller Information</h4>
+                        {% for field in seller_form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in field.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                         </div>
-                        
-                        <!-- Step 1: Basic Info -->
-                        <div class="form-step" id="step1">
-                            <h4 class="mb-4">Step 1: Basic Information</h4>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">I want to join as:</label>
-                                <div class="role-options">
-                                    {% for value, label in form.role.field.choices %}
-                                    {% if value == 'seller' or value == 'company' %}
-                                    <div class="role-option">
-                                        <input type="radio" name="role" value="{{ value }}" id="role_{{ value }}" 
-                                               class="role-radio" {% if forloop.first %}checked{% endif %}>
-                                        <label for="role_{{ value }}" class="role-label">
-                                            <i class="fas {% if value == 'seller' %}fa-store{% else %}fa-building{% endif %} fa-2x mb-2"></i>
-                                            <span>{{ label }}</span>
-                                        </label>
-                                    </div>
-                                    {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-success">Complete Signup</button>
+                    </form>
 
-                            <div class="mb-3">
-                                <label class="form-label">Username</label>
-                                {{ form.username }}
-                                {% if form.username.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.username.errors }}</div>
-                                {% endif %}
+                    <!-- Company Form -->
+                    <form method="post" enctype="multipart/form-data" id="companyForm" class="d-none">
+                        {% csrf_token %}
+                        <input type="hidden" name="role" value="company">
+                        <h4 class="mb-4">Company Information</h4>
+                        {% for field in company_form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in field.errors %}
+                                    {{ error }}
+                                {% endfor %}
                             </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                {{ form.email }}
-                                {% if form.email.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.email.errors }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Phone</label>
-                                {{ form.phone }}
-                                {% if form.phone.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.phone.errors }}</div>
-                                {% endif %}
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Profile Picture (Optional)</label>
-                                {{ form.profile_picture }}
-                            </div>
+                            {% endif %}
                         </div>
-
-                        <!-- Step 2: Company Information -->
-                        <div class="form-step d-none" id="step2">
-                            <h4 class="mb-4">Step 2: Company Information</h4>
-                            
-                            {{ company_form.as_p }}
-                        </div>
-
-                        <!-- Step 3: Role-Specific Information -->
-                        <div class="form-step d-none" id="step3">
-                            <h4 class="mb-4">Step 3: Additional Information</h4>
-                            
-                            <div id="seller-fields" class="role-fields d-none">
-                                {{ seller_form.as_p }}
-                                {{ seller_product_form.as_p }}
-                            </div>
-
-                            <div id="company-fields" class="role-fields d-none">
-                                {{ company_form.as_p }}
-                            </div>
-                        </div>
-
-                        <!-- Step 4: Password -->
-                        <div class="form-step d-none" id="step4">
-                            <h4 class="mb-4">Step 4: Set Password</h4>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Password</label>
-                                {{ form.password1 }}
-                                {% if form.password1.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.password1.errors }}</div>
-                                {% endif %}
-                                <div class="form-text">{{ form.password1.help_text }}</div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Confirm Password</label>
-                                {{ form.password2 }}
-                                {% if form.password2.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.password2.errors }}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <!-- Navigation buttons -->
-                        <div class="d-flex justify-content-between mt-4">
-                            <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
-                                <i class="fas fa-arrow-left me-2"></i>Previous
-                            </button>
-                            <button type="button" class="btn btn-primary" id="nextBtn">
-                                Next<i class="fas fa-arrow-right ms-2"></i>
-                            </button>
-                            <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
-                                <i class="fas fa-check me-2"></i>Complete Signup
-                            </button>
-                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-success">Complete Signup</button>
                     </form>
                 </div>
             </div>
@@ -137,13 +84,13 @@
     .role-options {
         display: flex;
         justify-content: space-around;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 2rem;
+        gap: 2rem;
+        margin: 2rem 0;
     }
     
     .role-option {
-        text-align: center;
+        flex: 1;
+        max-width: 200px;
     }
     
     .role-radio {
@@ -154,7 +101,7 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        padding: 1rem;
+        padding: 2rem;
         border: 2px solid #dee2e6;
         border-radius: 10px;
         cursor: pointer;
@@ -165,372 +112,28 @@
         border-color: #0d6efd;
         background-color: #e7f1ff;
     }
-    
-    .progress {
-        height: 0.5rem;
-        border-radius: 1rem;
-    }
-    
-    .form-step {
-        animation: fadeIn 0.5s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .is-invalid {
-        border-color: #dc3545 !important;
-    }
-
-    .invalid-feedback {
-        color: #dc3545;
-        font-size: 0.875em;
-        margin-top: 0.25rem;
-    }
-
-    .btn:disabled {
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
-
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
 </style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        let currentStep = 1;
-        const totalSteps = 4;
-    
-        const form = document.getElementById('signupForm');
-        const nextBtn = document.getElementById('nextBtn');
-        const prevBtn = document.getElementById('prevBtn');
-        const submitBtn = document.getElementById('submitBtn');
-        const progressBar = document.getElementById('progressBar');
-    
-        function initializeFormFields() {
-            // Initialize all material fields as required
-            document.querySelectorAll('[name*="material"]').forEach(field => {
-                field.setAttribute('required', '');
-                field.dataset.required = 'true';
-            });
-    
-            // Initialize all product material fields as required
-            document.querySelectorAll('[name*="product_material"]').forEach(field => {
-                field.setAttribute('required', '');
-                field.dataset.required = 'true';
-            });
-    
-            // Initialize other required fields
-            document.querySelectorAll('input[required], select[required], textarea[required]').forEach(field => {
-                field.dataset.required = 'true';
-                if (field.closest('.d-none')) {
-                    field.removeAttribute('required');
-                }
-            });
-        }
-    
-        function validateStep(step) {
-            let isValid = true;
-            const currentStepDiv = document.getElementById(`step${step}`);
-            
-            if (step === 3) {
-                const selectedRole = document.querySelector('input[name="role"]:checked').value;
-                
-                if (selectedRole === 'seller') {
-                    const sellerFields = document.getElementById('seller-fields');
-                    if (sellerFields) {
-                        // Get only the visible material field
-                        const materialField = sellerFields.querySelector('select[name="material"]:not(.d-none)');
-                        if (materialField) {
-                            if (!materialField.value) {
-                                isValid = false;
-                                showFieldError(materialField, 'Material field is required');
-                            } else {
-                                clearFieldError(materialField);
-                            }
-                        }
+        const roleRadios = document.querySelectorAll('input[name="role"]');
+        const sellerForm = document.getElementById('sellerForm');
+        const companyForm = document.getElementById('companyForm');
 
-                        // Validate other required fields
-                        sellerFields.querySelectorAll('input[required]:not([name="material"]), select[required]:not([name="material"]), textarea[required]').forEach(field => {
-                            if (!validateField(field)) {
-                                isValid = false;
-                            }
-                        });
-                    }
-                    
-                } else if (selectedRole === 'company') {
-                    const companyFields = document.getElementById('company-fields');
-                    if (companyFields) {
-                        companyFields.querySelectorAll('[name*="material"]').forEach(field => {
-                            if (!validateField(field)) {
-                                isValid = false;
-                            }
-                        });
-                    }
-                }
-            }
-    
-            // Validate other visible required fields
-            const visibleFields = Array.from(currentStepDiv.querySelectorAll(
-                'input[required], select[required], textarea[required]'
-            )).filter(field => {
-                const isVisible = !field.closest('.d-none');
-                const roleFields = field.closest('.role-fields');
-                return isVisible && (!roleFields || !roleFields.classList.contains('d-none'));
-            });
-    
-            visibleFields.forEach(field => {
-                if (!validateField(field)) {
-                    isValid = false;
-                }
-            });
-    
-            return isValid;
-        }
-    
-        function validateField(field) {
-            const value = field.value.trim();
-            let isValid = true;
-    
-            // Special handling for material fields
-            if (field.name.includes('material')) {
-                isValid = value !== '';
-                if (!isValid) {
-                    showFieldError(field, 'Material field is required');
-                    return false;
-                }
-            }
-    
-            // Other field validations
-            switch(field.type) {
-                case 'email':
-                    isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-                    break;
-                case 'tel':
-                    isValid = /^[\d\s-+()]*$/.test(value) && value.length >= 10;
-                    break;
-                case 'number':
-                    isValid = value !== '' && !isNaN(value);
-                    break;
-                case 'password':
-                    if (field.name === 'password2') {
-                        const password1 = document.querySelector('input[name="password1"]');
-                        isValid = value === password1.value && value !== '';
-                    } else {
-                        isValid = value.length >= 8;
-                    }
-                    break;
-                default:
-                    isValid = value !== '';
-            }
-    
-            if (!isValid) {
-                showFieldError(field, getErrorMessage(field));
-            } else {
-                clearFieldError(field);
-            }
-    
-            return isValid;
-        }
-    
-        function updateRoleFields(role) {
-            // Hide all role fields first
-            document.querySelectorAll('.role-fields').forEach(fieldset => {
-                fieldset.classList.add('d-none');
-                fieldset.querySelectorAll('[data-required="true"]').forEach(field => {
-                    field.removeAttribute('required');
-                });
-            });
-    
-            // Show and enable fields for selected role
-            const selectedFields = document.getElementById(`${role}-fields`);
-            if (selectedFields) {
-                selectedFields.classList.remove('d-none');
-                
-                // Enable all required fields for the selected role
-                selectedFields.querySelectorAll('[data-required="true"]').forEach(field => {
-                    field.setAttribute('required', '');
-                });
-    
-                // Enable all material fields for the selected role
-                selectedFields.querySelectorAll('[name*="material"]').forEach(field => {
-                    field.setAttribute('required', '');
-                });
-    
-                // For sellers, also enable product material fields
-                if (role === 'seller') {
-                    selectedFields.querySelectorAll('[name*="product-material"]').forEach(field => {
-                        field.setAttribute('required', '');
-                    });
-                }
-            }
-        }
-    
-        // Rest of the functions remain the same
-        function showFieldError(field, message) {
-            field.classList.add('is-invalid');
-            clearFieldError(field);
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback d-block';
-            errorDiv.textContent = message;
-            field.parentNode.insertBefore(errorDiv, field.nextSibling);
-        }
-    
-        function clearFieldError(field) {
-            field.classList.remove('is-invalid');
-            const existingError = field.nextElementSibling;
-            if (existingError?.classList.contains('invalid-feedback')) {
-                existingError.remove();
-            }
-        }
-    
-        function getErrorMessage(field) {
-            if (field.name.includes('material')) {
-                return field.name.includes('product-material') ? 
-                    'Product material field is required' : 
-                    'Material field is required';
-            }
-    
-            switch(field.type) {
-                case 'email':
-                    return 'Please enter a valid email address';
-                case 'tel':
-                    return 'Please enter a valid phone number';
-                case 'number':
-                    return 'Please enter a valid number';
-                case 'password':
-                    return field.name === 'password2' ? 
-                        'Passwords do not match' : 
-                        'Password must be at least 8 characters long';
-                default:
-                    return field.tagName.toLowerCase() === 'select' ? 
-                        'Please select an option' : 'This field is required';
-            }
-        }
-    
-        function showStep(step) {
-            document.querySelectorAll('.form-step').forEach(s => s.classList.add('d-none'));
-            const currentStepDiv = document.getElementById(`step${step}`);
-            currentStepDiv.classList.remove('d-none');
-            
-            progressBar.style.width = `${(step / totalSteps) * 100}%`;
-            prevBtn.style.display = step === 1 ? 'none' : 'block';
-            nextBtn.style.display = step === totalSteps ? 'none' : 'block';
-            submitBtn.style.display = step === totalSteps ? 'block' : 'none';
-    
-            if (step === 3) {
-                const selectedRole = document.querySelector('input[name="role"]:checked').value;
-                updateRoleFields(selectedRole);
-            }
-    
-            currentStep = step;
-        }
-    
-        // Event Listeners
-        nextBtn.addEventListener('click', () => {
-            if (validateStep(currentStep)) {
-                if (currentStep < totalSteps) {
-                    currentStep++;
-                    showStep(currentStep);
-                }
-            }
-        });
-    
-        prevBtn.addEventListener('click', () => {
-            if (currentStep > 1) {
-                currentStep--;
-                showStep(currentStep);
-            }
-        });
-    
-        // Handle role changes
-        document.querySelectorAll('input[name="role"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                if (currentStep === 3) {
-                    updateRoleFields(radio.value);
+        roleRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === 'seller') {
+                    sellerForm.classList.remove('d-none');
+                    companyForm.classList.add('d-none');
+                } else if (this.value === 'company') {
+                    companyForm.classList.remove('d-none');
+                    sellerForm.classList.add('d-none');
                 }
             });
         });
-    
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-             // Remove any duplicate or empty material fields
-            const materialFields = form.querySelectorAll('select[name="material"]');
-            materialFields.forEach(field => {
-                if (!field.value || field.closest('.d-none')) {
-                    field.disabled = true;
-                }
-            });
-                
-            if (validateStep(currentStep)) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Account...';
-                
-                // Get the selected role
-                const selectedRole = document.querySelector('input[name="role"]:checked').value;
-                
-                if (selectedRole === 'seller') {
-                    // Enable all seller form fields including product form
-                    const sellerFields = document.getElementById('seller-fields');
-                    if (sellerFields) {
-                        // Enable main seller form fields
-                        sellerFields.querySelectorAll('input, select, textarea').forEach(field => {
-                            // Only enable if the field has a name attribute and a value
-                            if (field.name && field.value.trim() !== '') {
-                                field.disabled = false;
-                            }
-                        });
-        
-                        // Specifically handle product form fields
-                        const productFormFields = sellerFields.querySelectorAll('[name^="product-"]');
-                        productFormFields.forEach(field => {
-                            // Enable all product form fields regardless of value
-                            field.disabled = false;
-                        });
-        
-                        // If there are any hidden fields in the product form, make sure they're enabled
-                        sellerFields.querySelectorAll('input[type="hidden"]').forEach(field => {
-                            field.disabled = false;
-                        });
-                    }
-                } else {
-                    // For other roles, just enable their respective fields
-                    const roleFields = document.getElementById(`${selectedRole}-fields`);
-                    if (roleFields) {
-                        roleFields.querySelectorAll('input, select, textarea').forEach(field => {
-                            field.disabled = false;
-                        });
-                    }
-                }
-                
-                // Remove disabled attribute from any fields that might be part of the form
-                form.querySelectorAll('[disabled]').forEach(field => {
-                    // Only enable if the field has a name attribute
-                    if (field.name) {
-                        field.disabled = false;
-                    }
-                });
-                
-                // Double check that critical product form fields are enabled
-                const productFields = form.querySelectorAll('[name^="product-"]');
-                productFields.forEach(field => {
-                    field.disabled = false;
-                });
-        
-                // Submit the form
-                this.submit();
-            }
-        });
-    
-        // Initialize form
-        initializeFormFields();
-        showStep(1);
     });
 </script>
+
 {% if messages %}
     {% for message in messages %}
         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">

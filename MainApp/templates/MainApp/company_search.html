@@ -1,0 +1,97 @@
+{% extends 'MainApp/base.html' %}
+{% block content %}
+<div class="container mt-5 pt-4"></div>
+
+<div class="container mt-4">
+    <!-- Notification Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Material Matching Companies</h2>
+        <button id="notifyButton" class="btn btn-primary">
+            Notify Top 10 Companies
+        </button>
+    </div>
+
+    <!-- Materials List -->
+    {% if seller_materials %}
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Your Materials</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for material in seller_materials %}
+                <div class="col-md-3 mb-2">
+                    <span class="badge bg-secondary p-2">{{ material.name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Companies Grid -->
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for company in matching_companies %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ company.username }}</h5>
+                    <p class="card-text">Main Product : {{ company.main_product }}</p>
+                    <p class="card-text">
+                        Company Requirements:
+                        {% for material in company.required_materials %}
+                            {{ material }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                        {% endfor %}
+                    </p>
+                    <a href="{{company.website}}" class="">Website</a>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Locatio : {{ company.address }}</small>
+                        <a href="{% url 'contact' company.id %}" class="btn btn-sm btn-outline-primary">
+                            Contact
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                No matching companies found.
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add JavaScript -->
+<script>
+document.getElementById('notifyButton').addEventListener('click', function() {
+    const companies = {{ matching_companies|safe }};
+    companies.forEach(company => {
+        console.log(`Company Email: ${company.user__email}, Seller Email: {{ seller_email }}`);
+    });
+    alert('Check console for company and seller details');
+});
+
+document.querySelectorAll('.contact-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const companyEmail = this.dataset.email;
+        console.log(`Contact initiated with company: ${companyEmail}`);
+    });
+});
+</script>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+.badge {
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}
