@@ -1,0 +1,243 @@
+{% extends 'MainApp/base.html' %}
+
+{% block title %}Welcome to SME Connect{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section position-relative vh-100 d-flex align-items-center" style="background: linear-gradient(45deg, rgba(0,0,0,0.8), rgba(29,38,113,0.8)), url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?ixlib=rb-4.0.3') center/cover;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 text-white">
+                <h1 class="display-3 fw-bold mb-4 animate__animated animate__fadeInLeft">Transform Your Business with SME Connect</h1>
+                <p class="lead mb-5 animate__animated animate__fadeInLeft animate__delay-1s">
+                    {% if user.is_authenticated %}
+                        <span class="fw-bold text-warning">Welcome back, {{ user.username }}! ✨</span>
+                        <br>
+                        <span class="fst-italic">Ready to take your business journey to extraordinary new heights?</span>
+                        <span class="text-primary">Let's make it happen! 🚀</span>
+                    {% else %}
+                        <span class="fw-bold">Discover the Future of Business Networking</span>
+                        <br>
+                        <span class="text-primary">Smart Matching</span> • 
+                        <span class="text-success">Seamless Connections</span> • 
+                        <span class="text-info">Unlimited Growth</span>
+                        <br>
+                        <span class="fst-italic">Your success story starts here! 💫</span>
+                    {% endif %}
+                </p>
+                {% if not user.is_authenticated %}
+                <div class="animate__animated animate__fadeInUp animate__delay-1s">
+                    <a href="{% url 'signup' %}" class="btn btn-primary btn-lg px-5 me-3 rounded-pill shadow-lg">Start Now</a>
+                    <a href="{% url 'login' %}" class="btn btn-outline-light btn-lg px-5 rounded-pill">Sign In</a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-lg-6 d-none d-lg-block animate__animated animate__fadeInRight">
+                <img src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3" class="img-fluid rounded-3 shadow-lg" alt="Business Growth">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center display-4 mb-5">Powerful Features for Your Success</h2>
+        <div class="row g-4">
+            <div class="col-md-4 animate__animated animate__fadeInUp">
+                <div class="card h-100 border-0 shadow-sm hover-scale">
+                    <div class="card-body text-center p-5">
+                        <div class="feature-icon mb-4">
+                            <i class="fas fa-handshake fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="mb-3">Smart Matching</h4>
+                        <p class="text-muted">Our AI-powered system analyzes your needs and connects you with perfect business partners.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="card h-100 border-0 shadow-sm hover-scale">
+                    <div class="card-body text-center p-5">
+                        <div class="feature-icon mb-4">
+                            <i class="fas fa-users fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="mb-3">Community Network</h4>
+                        <p class="text-muted">Connect with a thriving community of businesses and expand your professional network.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="card h-100 border-0 shadow-sm hover-scale">
+                    <div class="card-body text-center p-5">
+                        <div class="feature-icon mb-4">
+                            <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                        </div>
+                        <h4 class="mb-3">Enterprise Security</h4>
+                        <p class="text-muted">Bank-grade security protocols protect your sensitive business information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center display-4 mb-5">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card text-center animate__animated animate__fadeInUp">
+                    <div class="process-icon mb-4">
+                        <span class="badge bg-primary rounded-circle p-4"><i class="fas fa-user-plus fa-2x"></i></span>
+                    </div>
+                    <h5>1. Create Profile</h5>
+                    <p class="text-muted">Sign up and complete your business profile</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card text-center animate__animated animate__fadeInUp animate__delay-1s">
+                    <div class="process-icon mb-4">
+                        <span class="badge bg-primary rounded-circle p-4"><i class="fas fa-search fa-2x"></i></span>
+                    </div>
+                    <h5>2. Find Matches</h5>
+                    <p class="text-muted">Get matched with relevant business partners</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card text-center animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="process-icon mb-4">
+                        <span class="badge bg-primary rounded-circle p-4"><i class="fas fa-comments fa-2x"></i></span>
+                    </div>
+                    <h5>3. Connect</h5>
+                    <p class="text-muted">Communicate and negotiate deals</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="process-card text-center animate__animated animate__fadeInUp animate__delay-3s">
+                    <div class="process-icon mb-4">
+                        <span class="badge bg-primary rounded-circle p-4"><i class="fas fa-check-circle fa-2x"></i></span>
+                    </div>
+                    <h5>4. Grow</h5>
+                    <p class="text-muted">Close deals and expand your business</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Success Stories -->
+<section class="py-5 bg-gradient">
+    <div class="container">
+        <h2 class="text-center display-4 mb-5 text-white">Success Stories</h2>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-4">
+                            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330" class="rounded-circle me-3" style="width: 60px; height: 60px; object-fit: cover;" alt="Profile">
+                            <div>
+                                <h5 class="mb-0">Sarah Johnson</h5>
+                                <small class="text-muted">CEO, TechStart Inc.</small>
+                            </div>
+                        </div>
+                        <p class="mb-0">"SME Connect helped us find the perfect suppliers, reducing our procurement costs by 30%."</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Add more success stories -->
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section with Modern Design -->
+<section class="py-5 bg-primary text-white position-relative overflow-hidden">
+    <div class="container position-relative">
+        <div class="row g-4 text-center">
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card p-4 rounded-3 bg-white bg-opacity-10">
+                    <h2 class="display-4 fw-bold mb-2">500+</h2>
+                    <p class="h5 mb-0">Active Companies</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card p-4 rounded-3 bg-white bg-opacity-10">
+                    <h2 class="display-4 fw-bold mb-2">1000+</h2>
+                    <p class="h5 mb-0">Successful Matches</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card p-4 rounded-3 bg-white bg-opacity-10">
+                    <h2 class="display-4 fw-bold mb-2">50+</h2>
+                    <p class="h5 mb-0">Industries</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card p-4 rounded-3 bg-white bg-opacity-10">
+                    <h2 class="display-4 fw-bold mb-2">95%</h2>
+                    <p class="h5 mb-0">Satisfaction Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-5 position-relative" style="background: linear-gradient(75deg, rgba(0,0,0,0.9), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1557804506-669a67965ba0') center/cover fixed;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 text-white">
+                <h2 class="display-4 mb-4 animate__animated animate__fadeInUp">Ready to Scale Your Business?</h2>
+                <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">Join thousands of successful businesses that trust SME Connect</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                {% if not user.is_authenticated %}
+                <a href="{% url 'signup' %}" class="btn btn-lg btn-light rounded-pill px-5 animate__animated animate__fadeInUp animate__delay-2s">Get Started Free</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Styles -->
+<style>
+    .hover-scale {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .hover-scale:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    }
+    .bg-gradient {
+        background: linear-gradient(45deg, #1a237e, #0d47a1);
+    }
+    .feature-icon {
+        height: 80px;
+        width: 80px;
+        margin: 0 auto;
+        background: rgba(13, 110, 253, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .process-icon .badge {
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .stat-card {
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+
+<!-- Required CSS and JS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}
