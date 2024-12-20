@@ -1,12 +1,17 @@
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
+from .views import seller_dashboard
 
 urlpatterns = [
     path('', views.home, name='home'),
     path('signup/', views.signup_view, name='signup'),
     path('accounts/login/', views.login_view, name='login'),
     path('accounts/logout/', views.LogoutView.as_view(), name='logout'),
+    
+    path('profile/', views.profile_view, name='profile'),
+    
+    path('search-companies/', seller_dashboard, name='company-search'),
     
     # Password Reset URLs
     path('password-reset/', 
@@ -20,5 +25,5 @@ urlpatterns = [
          name='password_reset_confirm'),
     path('password-reset-complete/', 
          auth_views.PasswordResetCompleteView.as_view(template_name='password_reset_complete.html'), 
-         name='password_reset_complete'),    
+         name='password_reset_complete'), 
 ]

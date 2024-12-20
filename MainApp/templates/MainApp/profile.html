@@ -1,0 +1,233 @@
+{% extends 'MainApp/base.html' %}
+
+{% block title %}Profile - SME Connect{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4"></div>
+<div class="container mt-5">
+    <div class="row">
+        <!-- Profile Card -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-4">
+                    <div class="profile-image-container mb-4">
+                        {% if user.profile_picture %}
+                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-image">
+                        {% else %}
+                            <div class="profile-image-placeholder">
+                                <i class="fas fa-user fa-3x text-white"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <h3 class="mb-1">{{ user.username }}</h3>
+                    <span class="badge bg-primary mb-3">{{ user.get_role_display }}</span>
+                    <div class="contact-info">
+                        <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ user.email }}</p>
+                        {% if user.phone %}
+                            <p class="mb-1"><i class="fas fa-phone me-2"></i>{{ user.phone }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Card -->
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Quick Stats</h5>
+                    <div class="row g-0 text-center">
+                        {% if user.role == 'seller' %}
+                            <div class="col-6 border-end">
+                                <div class="p-3">
+                                    <h6 class="text-muted mb-1">Products</h6>
+                                    <h4 class="mb-0">{{ user.seller_profile.products.count }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3">
+                                    <h6 class="text-muted mb-1">Matches</h6>
+                                    <h4 class="mb-0">{{ user.seller_profile.products.matches.count }}</h4>
+                                </div>
+                            </div>
+                        {% elif user.role == 'buyer' %}
+                            <div class="col-6 border-end">
+                                <div class="p-3">
+                                    <h6 class="text-muted mb-1">Orders</h6>
+                                    <h4 class="mb-0">{{ user.orders.count }}</h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-3">
+                                    <h6 class="text-muted mb-1">Wishlist</h6>
+                                    <h4 class="mb-0">{{ user.wishlist_items.count }}</h4>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Update Form -->
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-white border-0 py-3">
+                    <h4 class="mb-0">Update Profile</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} animate__animated animate__fadeIn">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data" class="animate__animated animate__fadeIn">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+                                {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ field.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Role-Specific Information -->
+            {% if user.role == 'seller' %}
+                <div class="card shadow-sm border-0 mt-4">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h4 class="mb-0">Business Information</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted">Company</h6>
+                                <p class="mb-3">{{ user.seller_profile.company.company_name }}</p>
+                                
+                                <h6 class="text-muted">Business Address</h6>
+                                <p class="mb-3">{{ user.seller_profile.address|default:"Not provided" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted">WhatsApp Business</h6>
+                                <p class="mb-3">{{ user.seller_profile.whatsapp_number|default:"Not provided" }}</p>
+                                
+                                <h6 class="text-muted">Member Since</h6>
+                                <p>{{ user.date_joined|date:"F j, Y" }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .profile-image-container {
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+        position: relative;
+    }
+
+    .profile-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 4px solid #fff;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .profile-image-placeholder {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #0d6efd, #0dcaf0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 4px solid #fff;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .card {
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .form-control {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+    }
+
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-primary {
+        padding: 0.8rem;
+        font-weight: 500;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+    }
+
+    .badge {
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .contact-info {
+        color: #6c757d;
+    }
+
+    .contact-info i {
+        width: 20px;
+    }
+
+    .shadow-lg {
+        box-shadow: 0 1rem 3rem rgba(0,0,0,0.175) !important;
+    }
+
+    .shadow-sm {
+        box-shadow: 0 .125rem .25rem rgba(0,0,0,0.075) !important;
+    }
+
+    .card-header {
+        background: transparent;
+    }
+
+    .animate__animated {
+        animation-duration: 0.5s;
+    }
+</style>
+{% endblock %}
