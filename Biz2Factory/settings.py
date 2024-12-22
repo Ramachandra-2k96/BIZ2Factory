@@ -123,3 +123,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
+FORM_TIMEOUT = 60 * 15  # 15 minutes
+DATABASE_OPTIONS = {
+    'timeout': 300,  # 5 minutes
+}

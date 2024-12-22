@@ -39,10 +39,8 @@
                         </div>
                     </div>
 
-                    
-
                     <!-- Add this after the role selection and before forms -->
-                    <div id="materials-section" class="mb-4">
+                    <div id="materials-section" class="mb-4 d-none">
                         <h5 class="mb-3">Select Materials</h5>
                         <div class="material-search mb-3">
                             <input type="text" id="material-search" class="form-control" placeholder="Search materials...">
@@ -56,7 +54,7 @@
                                         <input class="form-check-input material-checkbox" type="checkbox" 
                                                value="{{ material.id }}" id="material_{{ material.id }}"
                                                name="selected_materials"
-                                               form="sellerForm, companyForm"> <!-- This makes checkboxes work with both forms -->
+                                               form="companyForm"> <!-- Remove sellerForm from form attribute -->
                                         <label class="form-check-label" for="material_{{ material.id }}">
                                             {{ material.name }}
                                         </label>
@@ -452,37 +450,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const roleRadios = document.querySelectorAll('input[name="role"]');
     const sellerForm = document.getElementById('sellerForm');
     const companyForm = document.getElementById('companyForm');
-    const materialSelectionPanel = document.getElementById('material-selection-panel');
-
-    // Initialize Select2 for material selection
-    if (typeof $ !== 'undefined') {
-        $('select').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Search for materials...',
-            allowClear: true
-        });
-    }
-
-    // Show initial form if a role is pre-selected
-    const selectedRole = document.querySelector('input[name="role"]:checked');
-    if (selectedRole) {
-        if (selectedRole.value === 'seller') {
-            sellerForm.classList.remove('d-none');
-            companyForm.classList.add('d-none');
-        } else if (selectedRole.value === 'company') {
-            companyForm.classList.remove('d-none');
-            sellerForm.classList.add('d-none');
-        }
-    }
+    const materialsSection = document.getElementById('materials-section');
 
     roleRadios.forEach(radio => {
         radio.addEventListener('change', function () {
             if (this.value === 'seller') {
                 sellerForm.classList.remove('d-none');
                 companyForm.classList.add('d-none');
+                materialsSection.classList.add('d-none'); // Hide materials for seller
             } else if (this.value === 'company') {
                 companyForm.classList.remove('d-none');
                 sellerForm.classList.add('d-none');
+                materialsSection.classList.remove('d-none'); // Show materials for company
             }
             // Trigger animation
             sellerForm.style.opacity = '0';
@@ -681,17 +660,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const sellerForm = document.getElementById('sellerForm');
     const companyForm = document.getElementById('companyForm');
     
-    [sellerForm, companyForm].forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const selectedMaterials = Array.from(document.querySelectorAll('.material-checkbox:checked'))
-                                         .map(cb => cb.value);
-            
-            if (selectedMaterials.length === 0) {
-                e.preventDefault();
-                alert('Please select at least one material');
-                return;
-            }
-        });
+    companyForm.addEventListener('submit', function(e) {
+        const selectedMaterials = Array.from(document.querySelectorAll('.material-checkbox:checked'))
+                                     .map(cb => cb.value);
+        
+        if (selectedMaterials.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one material');
+            return;
+        }
+    });
+
+    // Remove material validation for seller form
+    sellerForm.addEventListener('submit', function(e) {
+        // No material validation needed for seller
+        return true;
     });
 });
 </script>

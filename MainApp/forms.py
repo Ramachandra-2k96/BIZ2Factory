@@ -47,8 +47,6 @@ class SellerRegistrationForm(UserCreationForm):
                         address=self.cleaned_data['address'],
                         whatsapp_number=self.cleaned_data['whatsapp_number']
                     )
-                    if 'materials' in self.cleaned_data:
-                        seller.materials.set(self.cleaned_data['materials'])
                     seller.save()
             except Exception as e:
                 if user.pk:
