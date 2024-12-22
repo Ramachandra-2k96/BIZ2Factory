@@ -1,15 +1,31 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.views import View
 from .forms import SellerRegistrationForm, CompanyRegistrationForm, SellerUpdateForm, CompanyUpdateForm
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from .models import Seller, Company, SellerMaterialInventory, Material
+from .models import Seller, Company, SellerMaterialInventory, Material, TransactionHistory
 import csv
 import pandas as pd
 from django.contrib.auth.models import User
 from django.db import transaction
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
+from pprint import pprint
+from dotenv import load_dotenv
+import os
+# Load environment variables from .env file
+load_dotenv()
+
+# Get API key from environment variable
+API_KEY = os.getenv('BREVO_API_KEY')
+
+# Configure the API client
+configuration = sib_api_v3_sdk.Configuration()
+configuration.api_key['api-key'] = API_KEY
+api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+
 
 """
 ██╗  ██╗ ██████╗ ███╗   ███╗███████╗    ██████╗  █████╗  ██████╗ ███████╗
@@ -250,44 +266,35 @@ def seller_dashboard(request):
         seller_inventory = SellerMaterialInventory.objects.filter(seller=seller)
         seller_materials = [inventory.material for inventory in seller_inventory]
         
-        # Get matching companies based on inventory materials
+        # Get companies that need ANY of the seller's materials (OR condition)
         matching_companies = Company.objects.filter(
-            required_materials__in=seller_materials
-        ).distinct().select_related('user').prefetch_related('required_materials').values(
-            'user__username',
-            'user__email',
-            'user',
-            'address',
-            'phone',
-            'website',
-            'Main_product',
-            'required_materials__name'
-        )[:10]
-
-        company_details = {}
-        for company in matching_companies:
-            user_id = company['user']
-            if user_id not in company_details:
-                company_details[user_id] = {
-                    'username': company['user__username'],
-                    'email': company['user__email'],
-                    'address': company['address'],
-                    'phone': company['phone'],
-                    'website': company['website'],
-                    'main_product': company['Main_product'],
-                    'required_materials': set()
-                }
-            company_details[user_id]['required_materials'].add(company['required_materials__name'])
-
-        # Convert sets to lists for JSON serialization
-        for details in company_details.values():
-            details['required_materials'] = list(details['required_materials'])
-
-        matching_companies = list(company_details.values())
+            required_materials__in=seller_materials  # This creates an OR condition
+        ).distinct().select_related('user').prefetch_related('required_materials')
         
+        company_list = []
+        for company in matching_companies:
+            # Get all required materials for this company
+            required_materials = list(company.required_materials.all().values_list('name', flat=True))
+            
+            # Get matching materials (intersection between seller's and company's materials)
+            matching_materials = [m.name for m in seller_materials if m.name in required_materials]
+            
+            company_info = {
+                'id': company.id,
+                'username': company.user.username,
+                'email': company.user.email,
+                'address': company.address,
+                'phone': company.phone,
+                'website': company.website,
+                'main_product': company.Main_product,
+                'required_materials': required_materials,
+                'matching_materials': matching_materials  # Add matching materials to context
+            }
+            company_list.append(company_info)
+
         context = {
-            'matching_companies': matching_companies,
-            'seller_materials': seller_materials,  # Now contains materials from inventory
+            'matching_companies': company_list,
+            'seller_materials': [m.name for m in seller_materials],
             'seller_email': seller.user.email
         }
         
@@ -297,7 +304,244 @@ def seller_dashboard(request):
         messages.error(request, "Seller account required.")
         return redirect('home')
    
+@login_required
+def add_inventory(request):
+    if not Seller.is_user_seller(request.user):
+        messages.error(request, "Only sellers can add inventory")
+        return redirect('profile')
+        
+    if request.method == 'POST':
+        material_id = request.POST.get('material')
+        quantity = request.POST.get('quantity')
+        available_from = request.POST.get('available_from')
+        available_till = request.POST.get('available_till')
+        
+        try:
+            material = Material.objects.get(id=material_id)
+            seller = request.user.seller
+            
+            inventory = SellerMaterialInventory.objects.create(
+                seller=seller,
+                material=material,
+                quantity=quantity,
+                Available_from=available_from,
+                Available_till=available_till
+            )
+            
+            messages.success(request, f"Added {quantity} units of {material.name} to inventory")
+            return redirect('profile')
+            
+        except Exception as e:
+            messages.error(request, f"Error adding inventory: {str(e)}")
+    
+    materials = Material.objects.all()
+    return render(request, 'MainApp/add_inventory.html', {'materials': materials})
 
+@login_required
+def inventory_management(request):
+    if not Seller.is_user_seller(request.user):
+        messages.error(request, "Only sellers can access inventory management")
+        return redirect('profile')
+    
+    seller = request.user.seller
+    inventory_items = SellerMaterialInventory.objects.filter(
+        seller=seller
+    ).select_related('material').prefetch_related('transactionhistory_set')
+    
+    transactions = TransactionHistory.objects.filter(
+        seller_material_inventory__seller=seller
+    ).order_by('-date')
+    
+    # Prepare data for chart
+    chart_data = {}
+    for transaction in transactions:
+        date = transaction.date.strftime('%Y-%m-%d')
+        material_name = transaction.seller_material_inventory.material.name
+        if material_name not in chart_data:
+            chart_data[material_name] = {'dates': [], 'quantities': []}
+        chart_data[material_name]['dates'].append(date)
+        chart_data[material_name]['quantities'].append(transaction.change)
+    
+    return render(request, 'MainApp/inventory_management.html', {
+        'inventory_items': inventory_items,
+        'transactions': transactions,
+        'has_transactions': transactions.exists(),
+        'chart_data': chart_data
+    })
+
+@login_required
+def edit_inventory(request, inventory_id):
+    inventory = get_object_or_404(SellerMaterialInventory, id=inventory_id, seller=request.user.seller)
+    
+    if request.method == 'POST':
+        inventory.quantity = request.POST.get('quantity')
+        inventory.Available_from = request.POST.get('available_from')
+        inventory.Available_till = request.POST.get('available_till')
+        inventory.save()
+        messages.success(request, "Inventory updated successfully")
+        return redirect('inventory_management')
+        
+    return render(request, 'MainApp/edit_inventory.html', {'inventory': inventory})
+
+@login_required
+def delete_inventory(request, inventory_id):
+    if not request.user.is_authenticated or not hasattr(request.user, 'seller'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'})
+        
+    try:
+        inventory = SellerMaterialInventory.objects.get(
+            id=inventory_id, 
+            seller=request.user.seller
+        )
+        inventory.delete()
+        return JsonResponse({'status': 'success'})
+    except SellerMaterialInventory.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Inventory not found'})
+
+
+def send_email(to_email, subject, html_content, from_name, from_email):
+    """
+    Send a simple email using the Brevo Transactional Email API.
+
+    Args:
+        to_email (str): The recipient's email address.
+        subject (str): The subject of the email.
+        html_content (str): The HTML content of the email.
+        from_name (str): The sender's name.
+        from_email (str): The sender's email address.
+    
+    Returns:
+        Response: API response from Brevo.
+    """
+    try:
+        # Prepare the email data
+        email_data = {
+            "sender": {"name": from_name, "email": from_email},
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "htmlContent": html_content
+        }
+
+        # Send the email using the TransactionalEmailsApi
+        api_response = api_instance.send_transac_email(email_data)
+        pprint(api_response)
+        return api_response
+    except ApiException as e:
+        print(f"Exception when calling TransactionalEmailsApi->send_transac_email: {e}")
+        return None
+
+@login_required
+def contact_company(request, company_id):
+    """Send email to a single company"""
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+    
+    try:
+        seller = Seller.objects.get(user=request.user)
+        company = Company.objects.get(id=company_id)
+        
+        # Get seller's materials that match company's requirements
+        seller_inventory = SellerMaterialInventory.objects.filter(
+            seller=seller,
+            material__in=company.required_materials.all()
+        )
+        
+        matching_materials = [inv.material.name for inv in seller_inventory]
+        
+        html_content = f"""
+        <h2>Material Supply Interest</h2>
+        <p>Hello {company.user.username},</p>
+        <p>{seller.user.username} is interested in supplying materials to your company.</p>
+        <p>Matching materials available:</p>
+        <ul>
+            {''.join(f'<li>{material}</li>' for material in matching_materials)}
+        </ul>
+        <p>Contact details:</p>
+        <p>Email: {seller.user.email}</p>
+        <p>Phone: {seller.phone}</p>
+        """
+        
+        response = send_email(
+            to_email=company.user.email,
+            subject="Material Supply Interest",
+            html_content=html_content,
+            from_name=seller.user.username,
+            from_email=seller.user.email
+        )
+        
+        if response:
+            return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'error', 'message': 'Failed to send email'})
+        
+    except (Seller.DoesNotExist, Company.DoesNotExist) as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+@login_required
+def notify_top_companies(request):
+    """Send email to top 10 matching companies"""
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+    
+    try:
+        seller = Seller.objects.get(user=request.user)
+        seller_materials = SellerMaterialInventory.objects.filter(
+            seller=seller,
+            quantity__gt=0
+        ).values_list('material', flat=True)
+        
+        matching_companies = Company.objects.filter(
+            required_materials__in=seller_materials
+        ).distinct()[:10]
+        
+        success_count = 0
+        for company in matching_companies:
+            matching_materials = company.required_materials.filter(
+                id__in=seller_materials
+            )
+            
+            html_content = f"""
+            <h2>Material Supply Availability</h2>
+            <p>Hello {company.user.username},</p>
+            <p>{seller.user.username} has materials that match your requirements:</p>
+            <ul>
+                {''.join(f'<li>{material.name}</li>' for material in matching_materials)}
+            </ul>
+            <p>Contact details:</p>
+            <p>Email: {seller.user.email}</p>
+            <p>Phone: {seller.phone}</p>
+            """
+            
+            response = send_email(
+                to_email=company.user.email,
+                subject="Material Supply Match",
+                html_content=html_content,
+                from_name=seller.user.username,
+                from_email=seller.user.email
+            )
+            
+            if response:
+                success_count += 1
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Successfully sent emails to {success_count} companies'
+        })
+        
+    except Seller.DoesNotExist as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 #**************************************************************************#
 #*                                                                        *#
 #*                       AUTOMATION ZONE                                  *#

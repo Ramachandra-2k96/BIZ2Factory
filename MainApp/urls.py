@@ -21,4 +21,12 @@ urlpatterns = [
     
      path('fill',views.fill,name='fill'),
      path('api/materials/', views.get_materials, name='get_materials'),
+     
+     path('add-inventory/', views.add_inventory, name='add_inventory'),
+     path('inventory/', views.inventory_management, name='inventory_management'),
+     path('inventory/edit/<int:inventory_id>/', views.edit_inventory, name='edit_inventory'),
+     path('inventory/delete/<int:inventory_id>/', views.delete_inventory, name='delete_inventory'),
+     
+     path('contact-company/<int:company_id>/', views.contact_company, name='contact_company'),
+     path('notify-top-companies/', views.notify_top_companies, name='notify_top_companies'),
 ]

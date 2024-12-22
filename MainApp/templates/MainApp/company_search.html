@@ -30,7 +30,7 @@
             <div class="row">
                 {% for material in seller_materials %}
                 <div class="col-md-3 mb-2">
-                    <span class="badge material-badge">{{ material.name }}</span>
+                    <span class="badge material-badge">{{ material }}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -69,7 +69,7 @@
                         <a href="{{company.website}}" class="btn btn-outline-primary btn-sm" target="_blank">
                             <i class="fas fa-globe me-1"></i> Website
                         </a>
-                        <a href="mailto:{{ company.email }}" class="btn btn-primary btn-sm contact-btn">
+                        <a href="#" data-company-id="{{ company.id }}" class="btn btn-primary btn-sm contact-btn">
                             <i class="fas fa-envelope me-1"></i> Contact
                         </a>
                     </div>
@@ -184,20 +184,70 @@
 <!-- Add Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 <script>
-    document.getElementById('notifyButton').addEventListener('click', function() {
-        const companies = {{ matching_companies|safe }};
-        companies.forEach(company => {
-            console.log(`Company Email: ${company.user__email}, Seller Email: {{ seller_email }}`);
-        });
-        alert('Check console for company and seller details');
+    document.getElementById('notifyButton').addEventListener('click', async function() {
+        try {
+            const response = await fetch('/notify-top-companies/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                alert(data.message);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to send notifications');
+        }
     });
     
     document.querySelectorAll('.contact-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const companyEmail = this.dataset.email;
-            console.log(`Contact initiated with company: ${companyEmail}`);
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const companyId = this.dataset.companyId;
+            
+            try {
+                const response = await fetch(`/contact-company/${companyId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    alert('Email sent successfully!');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to send email');
+            }
         });
     });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     document.getElementById('companySearch').addEventListener('keyup', function() {
         const searchValue = this.value.toLowerCase();
         const companies = document.querySelectorAll('.col');

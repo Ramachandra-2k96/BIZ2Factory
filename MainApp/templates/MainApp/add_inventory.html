@@ -1,0 +1,83 @@
+{% extends 'MainApp/base.html' %}
+
+{% block title %}Add Inventory - Biz2factory{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4"></div>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-gradient">
+                    <h3 class="text-white mb-0">Add Material to Inventory</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Material Selection -->
+                        <div class="mb-3">
+                            <label for="material" class="form-label">Select Material</label>
+                            <select name="material" id="material" class="form-select" required>
+                                <option value="">Choose a material...</option>
+                                {% for material in materials %}
+                                    <option value="{{ material.id }}">{{ material.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" 
+                                   name="quantity" min="1" required>
+                        </div>
+
+                        <!-- Available From -->
+                        <div class="mb-3">
+                            <label for="available_from" class="form-label">Available From</label>
+                            <input type="date" class="form-control" id="available_from" 
+                                   name="available_from" required>
+                        </div>
+
+                        <!-- Available Till -->
+                        <div class="mb-3">
+                            <label for="available_till" class="form-label">Available Till</label>
+                            <input type="date" class="form-control" id="available_till" 
+                                   name="available_till" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">Add to Inventory</button>
+                        <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date as today for date inputs
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('available_from').min = today;
+    document.getElementById('available_till').min = today;
+
+    // Ensure 'Available Till' is after 'Available From'
+    document.getElementById('available_from').addEventListener('change', function() {
+        document.getElementById('available_till').min = this.value;
+    });
+});
+</script>
+
+<style>
+.bg-gradient {
+    background: linear-gradient(45deg, #1d2671, #0d6efd);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+{% endblock %}
