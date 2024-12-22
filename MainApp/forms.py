@@ -26,32 +26,34 @@ class SellerRegistrationForm(UserCreationForm):
     profile_picture = forms.ImageField(required=False, widget=forms.ClearableFileInput(attrs={'class': 'form-control'}))
     address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control'}))
     whatsapp_number = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    materials = forms.ModelMultipleChoiceField(
-        queryset=Material.objects.all(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'materials-selection'
-        })
-    )
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'phone', 'profile_picture', 'address', 'whatsapp_number', 'materials']
+        fields = ['username', 'email', 'password1', 'password2', 'phone', 'profile_picture', 'address', 'whatsapp_number']
 
     def save(self, commit=True):
+        from django.db import transaction
+        
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         if commit:
-            user.save()
-            seller = Seller.objects.create(
-                user=user,
-                phone=self.cleaned_data['phone'],
-                profile_picture=self.cleaned_data['profile_picture'],
-                address=self.cleaned_data['address'],
-                whatsapp_number=self.cleaned_data['whatsapp_number']
-            )
-            seller.materials.set(self.cleaned_data['materials'])
-            seller.save()
+            try:
+                with transaction.atomic():
+                    user.save()
+                    seller = Seller.objects.create(
+                        user=user,
+                        phone=self.cleaned_data['phone'],
+                        profile_picture=self.cleaned_data['profile_picture'],
+                        address=self.cleaned_data['address'],
+                        whatsapp_number=self.cleaned_data['whatsapp_number']
+                    )
+                    if 'materials' in self.cleaned_data:
+                        seller.materials.set(self.cleaned_data['materials'])
+                    seller.save()
+            except Exception as e:
+                if user.pk:
+                    user.delete()
+                raise e
         return user
     
 class CompanyRegistrationForm(UserCreationForm):
@@ -75,34 +77,35 @@ class CompanyRegistrationForm(UserCreationForm):
     address = forms.CharField(required=False, widget=forms.Textarea(attrs={'class': 'form-control'}))
     country = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
     website = forms.URLField(required=False, widget=forms.URLInput(attrs={'class': 'form-control'}))
-    industry = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
-    materials = forms.ModelMultipleChoiceField(
-        queryset=Material.objects.all(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'materials-selection'
-        })
-    )
+    Main_product = forms.CharField(required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password1', 'password2', 'phone', 'address', 'country', 'website', 'industry', 'materials']
+        fields = ['username', 'email', 'password1', 'password2', 'phone', 'address', 'country', 'website', 'Main_product']
 
     def save(self, commit=True):
+        from django.db import transaction
+        
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         if commit:
-            user.save()
-            company = Company.objects.create(
-                user=user,
-                phone=self.cleaned_data['phone'],
-                address=self.cleaned_data['address'],
-                country=self.cleaned_data['country'],
-                website=self.cleaned_data['website'],
-                industry=self.cleaned_data['industry']
-            )
-            company.materials.set(self.cleaned_data['materials'])
-            company.save()
+            try:
+                with transaction.atomic():
+                    user.save()
+                    company = Company.objects.create(
+                        user=user,
+                        phone=self.cleaned_data['phone'],
+                        address=self.cleaned_data['address'],
+                        country=self.cleaned_data['country'],
+                        website=self.cleaned_data['website'],
+                        Main_product=self.cleaned_data['Main_product'],
+                        required_materials=self.cleaned_data['required_materials']
+                    )
+                    company.save()
+            except Exception as e:
+                if user.pk:
+                    user.delete()
+                raise e
         return user
     
 class SellerUpdateForm(forms.ModelForm):
@@ -133,15 +136,10 @@ class SellerUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    materials = forms.ModelMultipleChoiceField(
-        queryset=Material.objects.all(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'materials-selection'})
-    )
 
     class Meta:
         model = Seller
-        fields = ['phone', 'profile_picture', 'address', 'whatsapp_number', 'materials']
+        fields = ['phone', 'profile_picture', 'address', 'whatsapp_number']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -150,7 +148,6 @@ class SellerUpdateForm(forms.ModelForm):
             self.fields['profile_picture'].initial = self.instance.profile_picture
             self.fields['address'].initial = self.instance.address
             self.fields['whatsapp_number'].initial = self.instance.whatsapp_number
-            self.fields['materials'].initial = self.instance.materials.all()
 
 class CompanyUpdateForm(forms.ModelForm):
     """
@@ -177,15 +174,10 @@ class CompanyUpdateForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    required_materials = forms.ModelMultipleChoiceField(
-        queryset=Material.objects.all(),
-        required=False,
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'materials-selection'})
-    )
 
     class Meta:
         model = Company
-        fields = ['phone', 'address', 'country', 'website', 'Main_product', 'required_materials']
+        fields = ['phone', 'address', 'country', 'website', 'Main_product']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -195,4 +187,3 @@ class CompanyUpdateForm(forms.ModelForm):
             self.fields['country'].initial = self.instance.country
             self.fields['website'].initial = self.instance.website
             self.fields['Main_product'].initial = self.instance.Main_product
-            self.fields['required_materials'].initial = self.instance.required_materials.all()

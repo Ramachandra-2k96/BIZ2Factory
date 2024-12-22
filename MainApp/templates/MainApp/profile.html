@@ -11,8 +11,8 @@
             <div class="card shadow-lg border-0">
                 <div class="card-body text-center p-4">
                     <div class="profile-image-container mb-4">
-                        {% if user.profile_picture %}
-                            <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-image">
+                        {% if user.seller.profile_picture %}
+                            <img src="{{ user.seller.profile_picture.url }}" alt="Profile Picture" class="profile-image">
                         {% else %}
                             <div class="profile-image-placeholder">
                                 <i class="fas fa-user fa-3x text-white"></i>

@@ -1,27 +1,36 @@
 {% extends 'MainApp/base.html' %}
 {% block content %}
 <div class="container mt-5 pt-4"></div>
-
-<div class="container mt-4">
-    <!-- Notification Button -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Material Matching Companies</h2>
-        <button id="notifyButton" class="btn btn-primary">
-            Notify Top 10 Companies
-        </button>
+    <div class="container mt-5 pt-4">
+    <!-- Header Section -->
+    <div class="header-section mb-5">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2 class="display-4 fw-bold text-gradient">Material Matching Companies</h2>
+            <button id="notifyButton" class="btn btn-primary btn-lg pulse-button">
+                <i class="fas fa-bell me-2"></i>Notify Top 10
+            </button>
+        </div>
     </div>
-
+       <!-- Search Bar -->
+       <div class="search-container mb-4">
+        <div class="input-group">
+            <span class="input-group-text bg-transparent text-white border-end-0">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" id="companySearch" class="form-control search-input" placeholder="Search companies...">
+        </div>
+    </div>
     <!-- Materials List -->
     {% if seller_materials %}
-    <div class="card mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0">Your Materials</h5>
+    <div class="glass-card mb-5">
+        <div class="card-header border-0 bg-transparent">
+            <h5 class="fw-bold"><i class="fas fa-boxes me-2"></i>Your Materials</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 {% for material in seller_materials %}
                 <div class="col-md-3 mb-2">
-                    <span class="badge bg-secondary p-2">{{ material.name }}</span>
+                    <span class="badge material-badge">{{ material.name }}</span>
                 </div>
                 {% endfor %}
             </div>
@@ -33,22 +42,35 @@
     <div class="row row-cols-1 row-cols-md-3 g-4">
         {% for company in matching_companies %}
         <div class="col">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">{{ company.username }}</h5>
-                    <p class="card-text">Main Product : {{ company.main_product }}</p>
-                    <p class="card-text">
-                        Company Requirements:
-                        {% for material in company.required_materials %}
-                            {{ material }}{% if not forloop.last %}, {% endif %}
-                        {% empty %}
-                        {% endfor %}
-                    </p>
-                    <a href="{{company.website}}" class="">Website</a>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-muted">Locatio : {{ company.address }}</small>
-                        <a href="{% url 'contact' company.id %}" class="btn btn-sm btn-outline-primary">
-                            Contact
+            <div class="company-card">
+                <div class="card-body p-4">
+                    <div class="company-icon mb-3">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5 class="card-title fw-bold mb-3">{{ company.username }}</h5>
+                    <div class="info-item">
+                        <i class="fas fa-industry me-2"></i>
+                        <span>{{ company.main_product }}</span>
+                    </div>
+                    <div class="info-item mt-2">
+                        <i class="fas fa-tools me-2"></i>
+                        <span>
+                            {% for material in company.required_materials %}
+                                {{ material }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                            {% endfor %}
+                        </span>
+                    </div>
+                    <div class="info-item mt-2">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <span>{{ company.address }}</span>
+                    </div>
+                    <div class="action-buttons mt-4">
+                        <a href="{{company.website}}" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="fas fa-globe me-1"></i> Website
+                        </a>
+                        <a href="mailto:{{ company.email }}" class="btn btn-primary btn-sm contact-btn">
+                            <i class="fas fa-envelope me-1"></i> Contact
                         </a>
                     </div>
                 </div>
@@ -56,42 +78,139 @@
         </div>
         {% empty %}
         <div class="col-12">
-            <div class="alert alert-info">
-                No matching companies found.
+            <div class="alert alert-info fade-in">
+                <i class="fas fa-info-circle me-2"></i>No matching companies found.
             </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
-<!-- Add JavaScript -->
-<script>
-document.getElementById('notifyButton').addEventListener('click', function() {
-    const companies = {{ matching_companies|safe }};
-    companies.forEach(company => {
-        console.log(`Company Email: ${company.user__email}, Seller Email: {{ seller_email }}`);
-    });
-    alert('Check console for company and seller details');
-});
-
-document.querySelectorAll('.contact-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const companyEmail = this.dataset.email;
-        console.log(`Contact initiated with company: ${companyEmail}`);
-    });
-});
-</script>
-
 <style>
-.card {
-    transition: transform 0.2s;
-}
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
-}
-.badge {
-    font-size: 0.9em;
-}
-</style>
+    /* Update existing styles */
+    .text-gradient {
+        background: linear-gradient(45deg, #ffffff, #a5c7e5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .glass-card {
+        background: rgba(29,38,113,0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.3);
+        color: white;
+    }
+    
+    .company-card {
+        background: rgba(29,38,113,0.95);
+        border-radius: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+        border: none;
+        color: white;
+    }
+    
+    .company-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        background: rgba(29,38,113,0.98);
+    }
+    
+    .company-icon {
+        font-size: 2rem;
+        color: #ffffff;
+    }
+    
+    .material-badge {
+        background: linear-gradient(45deg, rgba(0,0,0,0.95), rgba(29,38,113,0.95));
+        color: white;
+        padding: 8px 15px;
+        border-radius: 25px;
+        font-weight: 500;
+        font-size: 0.9em;
+    }
+    
+    .info-item {
+        color: rgba(255,255,255,0.9);
+        font-size: 0.9em;
+    }
+    
+    .pulse-button {
+        animation: pulse 2s infinite;
+        background: linear-gradient(45deg, rgba(0,0,0,0.95), rgba(29,38,113,0.95));
+        border: none;
+    }
+    
+    /* Add this new style for the body background */
+    body {
+        background: linear-gradient(135deg, #1a1a1a, #2a3875);
+        min-height: 100vh;
+        color: white;
+    }
+    
+    /* Update alert style */
+    .alert-info {
+        background: rgba(29,38,113,0.95);
+        border: none;
+        color: white;
+    }
+    
+    /* Update button styles */
+    .btn-outline-primary {
+        border-color: rgba(255,255,255,0.5);
+        color: white;
+    }
+    
+    .btn-outline-primary:hover {
+        background: rgba(255,255,255,0.1);
+        border-color: white;
+        color: white;
+    }
+    
+    .btn-primary {
+        background: rgba(13,110,253,0.9);
+        border: none;
+    }
+    
+    .btn-primary:hover {
+        background: rgba(13,110,253,1);
+        transform: translateY(-2px);
+    }
+    </style>
+
+<!-- Add Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script>
+    document.getElementById('notifyButton').addEventListener('click', function() {
+        const companies = {{ matching_companies|safe }};
+        companies.forEach(company => {
+            console.log(`Company Email: ${company.user__email}, Seller Email: {{ seller_email }}`);
+        });
+        alert('Check console for company and seller details');
+    });
+    
+    document.querySelectorAll('.contact-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const companyEmail = this.dataset.email;
+            console.log(`Contact initiated with company: ${companyEmail}`);
+        });
+    });
+    document.getElementById('companySearch').addEventListener('keyup', function() {
+        const searchValue = this.value.toLowerCase();
+        const companies = document.querySelectorAll('.col');
+        
+        companies.forEach(company => {
+            const companyName = company.querySelector('.card-title').textContent.toLowerCase();
+            const companyProduct = company.querySelector('.info-item span').textContent.toLowerCase();
+            if (companyName.includes(searchValue) || companyProduct.includes(searchValue)) {
+                company.style.display = '';
+            } else {
+                company.style.display = 'none';
+            }
+        });
+    });
+    </script>
 {% endblock %}

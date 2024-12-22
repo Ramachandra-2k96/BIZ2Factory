@@ -11,7 +11,11 @@ from .models import Seller, Company
 
 from django.shortcuts import render, get_object_or_404
 from .models import Seller
-
+import csv
+from .models import Seller, Company
+from .models import Material
+import pandas as pd
+    
 def home(request):
     return render(request, 'MainApp/index.html')
 
@@ -21,17 +25,36 @@ def signup_view(request):
 
     if request.method == 'POST':
         role = request.POST.get('role')
-        
+        selected_materials = []
+        for material in request.POST.getlist('selected_materials', []):
+            selected_materials.extend(int(id) for id in material.split(','))
         if role == 'seller':
             form = SellerRegistrationForm(request.POST, request.FILES)
             seller_form = form
             if form.is_valid():
                 try:
-                    user = form.save()  # This will create Seller instance
+                    user = form.save(commit=False)  # Don't save to DB yet
+                    user.save()  # Now save user
+                    
+                    # Create seller profile
+                    seller = Seller.objects.create(
+                        user=user,
+                        phone=form.cleaned_data['phone'],
+                        profile_picture=form.cleaned_data.get('profile_picture'),
+                        address=form.cleaned_data['address'],
+                        whatsapp_number=form.cleaned_data['whatsapp_number']
+                    )
+                    
+                    # Add selected materials
+                    if selected_materials:
+                        materials = Material.objects.filter(id__in=selected_materials)
+                        seller.materials.set(materials)
+                    
                     login(request, user)
                     messages.success(request, 'Seller account created successfully!')
                     return redirect('home')
                 except Exception as e:
+                    print(e)
                     messages.error(request, f'Error creating seller account: {str(e)}')
         
         elif role == 'company':
@@ -39,7 +62,24 @@ def signup_view(request):
             company_form = form
             if form.is_valid():
                 try:
-                    user = form.save()  # This will create Company instance
+                    user = form.save(commit=False)  # Don't save to DB yet
+                    user.save()  # Now save user
+                    
+                    # Create company profile
+                    company = Company.objects.create(
+                        user=user,
+                        phone=form.cleaned_data['phone'],
+                        address=form.cleaned_data['address'],
+                        country=form.cleaned_data['country'],
+                        website=form.cleaned_data['website'],
+                        Main_product=form.cleaned_data['Main_product']
+                    )
+                    
+                    # Add selected materials
+                    if selected_materials:
+                        materials = Material.objects.filter(id__in=selected_materials)
+                        company.required_materials.set(materials)
+                    
                     login(request, user)
                     messages.success(request, 'Company account created successfully!')
                     return redirect('home')
@@ -54,18 +94,33 @@ def signup_view(request):
                 for error in errors:
                     messages.error(request, f"{field.title()}: {error}")
 
-    return render(request, 'MainApp/signup.html', {
+    context = {
         'seller_form': seller_form,
-        'company_form': company_form
-    })
+        'company_form': company_form,
+        'materials': Material.objects.all(),
+    }
+    return render(request, 'MainApp/signup.html', context)
 
+def get_materials(request):
+    category = request.GET.get('category', 'all')
+    search = request.GET.get('search', '')
+    
+    materials = Material.objects.all()
+    
+    if search:
+        materials = materials.filter(name__icontains=search)
+    if category != 'all':
+        materials = materials.filter(category=category)
+        
+    return JsonResponse({
+        'materials': list(materials.values('id', 'name')[:100])  # Limit to 100 results
+    })
+    
 @login_required
 def profile_view(request):
     """
     Display and update user profile.
     """
-    from .models import Seller, Company
-    
     if request.method == 'POST':
         if Seller.is_user_seller(request.user):
             form = SellerUpdateForm(
@@ -174,3 +229,35 @@ def seller_dashboard(request):
     except Seller.DoesNotExist:
         messages.error(request, "Seller account required.")
         return redirect('home')
+    
+def fill(request):
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        file = request.FILES['excel_file']
+        try:
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+                update_materials(df)
+                messages.success(request, 'Materials updated successfully from CSV!')
+            elif file.name.endswith(('.xls', '.xlsx')):
+                df = pd.read_excel(file)
+                update_materials(df)
+                messages.success(request, 'Materials updated successfully from Excel!')
+            else:
+                messages.error(request, 'Invalid file format. Please upload .csv, .xls, or .xlsx file.')
+        except Exception as e:
+            messages.error(request, f'Error processing file: {str(e)}')
+
+    return render(request, 'MainApp/fill.html')
+
+def update_materials(df):
+
+    if 'Ingredients' in df.columns:
+        # Process each row's ingredients
+        for ingredients in df['Ingredients'].dropna():
+            # Split ingredients by comma and strip whitespace
+            ingredient_list = [ing.strip() for ing in str(ingredients).split(',')]
+            
+            # Create materials if they don't exist
+            for ingredient in ingredient_list:
+                if ingredient:  # Check if ingredient is not empty
+                    Material.objects.get_or_create(name=ingredient)

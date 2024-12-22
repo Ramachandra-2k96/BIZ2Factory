@@ -3,77 +3,128 @@
 {% block title %}Sign Up - Biz2factory{% endblock %}
 
 {% block content %}
-<div class="container mt-5 pt-4"></div>
-<div class="container mt-5">
+<div class="container mt-5 pt-5">
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">Join Biz2factory</h3>
+        <div class="col-md-10">
+            <div class="card shadow-lg border-0 rounded-lg overflow-hidden">
+                <div class="card-header bg-gradient position-relative py-4">
+                    <h3 class="text-white mb-0 text-center">Join Biz2factory</h3>
+                    <div class="header-overlay"></div>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-4">
                     <!-- Role Selection -->
-                    <div id="role-selection">
-                        <h4 class="mb-4">Select Your Role</h4>
+                    <div id="role-selection" class="animate__animated animate__fadeIn">
+                        <h4 class="text-center mb-4 text-gradient">Choose Your Role</h4>
                         <div class="role-options">
                             <div class="role-option">
                                 <input type="radio" name="role" value="seller" id="role_seller" class="role-radio" required>
                                 <label for="role_seller" class="role-label">
-                                    <i class="fas fa-store fa-2x mb-2"></i>
-                                    <span>Seller</span>
+                                    <div class="role-icon">
+                                        <i class="fas fa-store"></i>
+                                    </div>
+                                    <span class="role-text">Seller</span>
+                                    <p class="role-description">Register as a seller to showcase your products</p>
                                 </label>
                             </div>
                             <div class="role-option">
                                 <input type="radio" name="role" value="company" id="role_company" class="role-radio">
                                 <label for="role_company" class="role-label">
-                                    <i class="fas fa-building fa-2x mb-2"></i>
-                                    <span>Company</span>
+                                    <div class="role-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <span class="role-text">Company</span>
+                                    <p class="role-description">Register as a company to find suppliers</p>
                                 </label>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Seller Form -->
-                    <form method="post" enctype="multipart/form-data" id="sellerForm" class="d-none">
-                        {% csrf_token %}
-                        <input type="hidden" name="role" value="seller">
-                        <h4 class="mb-4">Seller Information</h4>
-                        {% for field in seller_form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in field.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-                        <button type="submit" class="btn btn-success">Complete Signup</button>
-                    </form>
+                    
 
-                    <!-- Company Form -->
-                    <form method="post" enctype="multipart/form-data" id="companyForm" class="d-none">
-                        {% csrf_token %}
-                        <input type="hidden" name="role" value="company">
-                        <h4 class="mb-4">Company Information</h4>
-                        {% for field in company_form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in field.errors %}
-                                    {{ error }}
+                    <!-- Add this after the role selection and before forms -->
+                    <div id="materials-section" class="mb-4">
+                        <h5 class="mb-3">Select Materials</h5>
+                        <div class="material-search mb-3">
+                            <input type="text" id="material-search" class="form-control" placeholder="Search materials...">
+                        </div>
+                        <div class="materials-container border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                            <div class="row" id="materials-list">
+                                {% for material in materials %}
+                                <div class="col-md-4 mb-2 material-item">
+                                    <div class="form-check">
+                                        <!-- Update the name to match form field -->
+                                        <input class="form-check-input material-checkbox" type="checkbox" 
+                                               value="{{ material.id }}" id="material_{{ material.id }}"
+                                               name="selected_materials"
+                                               form="sellerForm, companyForm"> <!-- This makes checkboxes work with both forms -->
+                                        <label class="form-check-label" for="material_{{ material.id }}">
+                                            {{ material.name }}
+                                        </label>
+                                    </div>
+                                </div>
                                 {% endfor %}
                             </div>
-                            {% endif %}
                         </div>
-                        {% endfor %}
-                        <button type="submit" class="btn btn-success">Complete Signup</button>
-                    </form>
+                        <div class="mt-2">
+                            <small class="text-muted">Selected: <span id="selected-count">0</span>/20</small>
+                        </div>
+                        <!-- Add hidden input to store selected materials -->
+                        <input type="hidden" id="selected_materials_input" name="selected_materials" form="sellerForm">
+                        <input type="hidden" id="selected_materials_input_company" name="selected_materials" form="companyForm">
+                    </div>
+
+                    <!-- Forms Container -->
+                    <div class="forms-container mt-4">
+                        <!-- Seller Form -->
+                        <form method="post" enctype="multipart/form-data" id="sellerForm" class="d-none animate__animated animate__fadeIn">
+                            {% csrf_token %}
+                            <input type="hidden" name="role" value="seller">
+                            <h4 class="text-gradient mb-4">Seller Information</h4>
+                            <div class="row">
+                                {% for field in seller_form %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-floating">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    </div>
+                                    {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-gradient w-100 py-3">Complete Registration</button>
+                        </form>
+
+                        <!-- Company Form -->
+                        <form method="post" enctype="multipart/form-data" id="companyForm" class="d-none animate__animated animate__fadeIn">
+                            {% csrf_token %}
+                            <input type="hidden" name="role" value="company">
+                            <h4 class="text-gradient mb-4">Company Information</h4>
+                            <div class="row">
+                                {% for field in company_form %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="form-floating">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    </div>
+                                    {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <button type="submit" class="btn btn-gradient w-100 py-3">Complete Registration</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,16 +132,39 @@
 </div>
 
 <style>
+    .bg-gradient {
+        background: linear-gradient(45deg, rgba(29,38,113,0.95), rgba(0,0,0,0.95));
+    }
+
+    .text-gradient {
+        background: linear-gradient(45deg, #1d2671, #0d6efd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .btn-gradient {
+        background: linear-gradient(45deg, #1d2671, #0d6efd);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+        color: white;
+    }
+
     .role-options {
         display: flex;
-        justify-content: space-around;
+        justify-content: center;
         gap: 2rem;
         margin: 2rem 0;
     }
     
     .role-option {
         flex: 1;
-        max-width: 200px;
+        max-width: 250px;
     }
     
     .role-radio {
@@ -103,43 +177,522 @@
         align-items: center;
         padding: 2rem;
         border: 2px solid #dee2e6;
-        border-radius: 10px;
+        border-radius: 15px;
         cursor: pointer;
         transition: all 0.3s ease;
     }
     
+    .role-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #1d2671;
+        transition: all 0.3s ease;
+    }
+    
+    .role-text {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .role-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-align: center;
+        margin: 0;
+    }
+    
     .role-radio:checked + .role-label {
         border-color: #0d6efd;
-        background-color: #e7f1ff;
+        background: linear-gradient(45deg, rgba(29,38,113,0.1), rgba(13,110,253,0.1));
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .role-radio:checked + .role-label .role-icon {
+        color: #0d6efd;
+        transform: scale(1.1);
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .role-options {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .role-option {
+            width: 100%;
+            max-width: 100%;
+        }
+    }
+
+    /* Select2 Customization */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container .select2-selection--single {
+        height: 58px;
+        padding: 15px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 56px;
+    }
+    .select2-container {
+        width: 100% !important;
+    }
+    
+    .select2-container .select2-selection--multiple {
+        min-height: 58px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #0d6efd;
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: white;
+        margin-right: 5px;
+    }
+    
+    /* Password field styling */
+    .form-floating input[type="password"] {
+        height: 58px !important;
+        padding: 1rem 0.75rem !important;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
+    
+    .form-floating input[type="password"]:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Enhanced Material Selection Styling */
+    .material-selection-container {
+        margin-bottom: 20px;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        min-height: 58px;
+        padding: 10px;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        background-color: #fff;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .select2-container--default .select2-search--inline .select2-search__field {
+        margin-top: 0;
+        height: 36px;
+        font-size: 1rem;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #0d6efd;
+        border: none;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+        margin: 4px;
+        font-size: 0.9rem;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: white;
+        margin-right: 8px;
+        font-size: 1.1rem;
+        border: none;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+
+    .select2-dropdown {
+        border-color: #ced4da;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #0d6efd;
+    }
+
+    .material-help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+
+    .material-search-container {
+        position: relative;
+    }
+
+    .materials-grid {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 20px;
+        height: 400px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .categories-list {
+        background: #f8f9fa;
+        padding: 15px;
+        border-right: 1px solid #dee2e6;
+        overflow-y: auto;
+    }
+
+    .category-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        border-radius: 6px;
+        margin-bottom: 5px;
+        transition: all 0.2s;
+    }
+
+    .category-item:hover {
+        background: #e9ecef;
+    }
+
+    .category-item.active {
+        background: #0d6efd;
+        color: white;
+    }
+
+    .materials-list {
+        padding: 15px;
+        overflow-y: auto;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 10px;
+    }
+
+    .material-item {
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .material-item:hover {
+        background: #f8f9fa;
+        border-color: #0d6efd;
+    }
+
+    .material-item.selected {
+        background: #e7f1ff;
+        border-color: #0d6efd;
+    }
+
+    .selected-materials-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        min-height: 50px;
+    }
+
+    .selected-material-tag {
+        background: #0d6efd;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .remove-material {
+        cursor: pointer;
+        padding: 2px 6px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+    }
+
+    .material-item {
+        transition: all 0.2s;
+    }
+    .material-item:hover {
+        background-color: #f8f9fa;
+    }
+    .form-check-input:checked + .form-check-label {
+        color: #0d6efd;
+        font-weight: 500;
     }
 </style>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const roleRadios = document.querySelectorAll('input[name="role"]');
-        const sellerForm = document.getElementById('sellerForm');
-        const companyForm = document.getElementById('companyForm');
+document.addEventListener('DOMContentLoaded', function () {
+    const roleRadios = document.querySelectorAll('input[name="role"]');
+    const sellerForm = document.getElementById('sellerForm');
+    const companyForm = document.getElementById('companyForm');
+    const materialSelectionPanel = document.getElementById('material-selection-panel');
 
-        roleRadios.forEach(radio => {
-            radio.addEventListener('change', function () {
-                if (this.value === 'seller') {
-                    sellerForm.classList.remove('d-none');
-                    companyForm.classList.add('d-none');
-                } else if (this.value === 'company') {
-                    companyForm.classList.remove('d-none');
-                    sellerForm.classList.add('d-none');
-                }
-            });
+    // Initialize Select2 for material selection
+    if (typeof $ !== 'undefined') {
+        $('select').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search for materials...',
+            allowClear: true
+        });
+    }
+
+    // Show initial form if a role is pre-selected
+    const selectedRole = document.querySelector('input[name="role"]:checked');
+    if (selectedRole) {
+        if (selectedRole.value === 'seller') {
+            sellerForm.classList.remove('d-none');
+            companyForm.classList.add('d-none');
+        } else if (selectedRole.value === 'company') {
+            companyForm.classList.remove('d-none');
+            sellerForm.classList.add('d-none');
+        }
+    }
+
+    roleRadios.forEach(radio => {
+        radio.addEventListener('change', function () {
+            if (this.value === 'seller') {
+                sellerForm.classList.remove('d-none');
+                companyForm.classList.add('d-none');
+            } else if (this.value === 'company') {
+                companyForm.classList.remove('d-none');
+                sellerForm.classList.add('d-none');
+            }
+            // Trigger animation
+            sellerForm.style.opacity = '0';
+            companyForm.style.opacity = '0';
+            setTimeout(() => {
+                sellerForm.style.opacity = '1';
+                companyForm.style.opacity = '1';
+            }, 100);
         });
     });
-</script>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    {% endfor %}
-{% endif %}
+    // Enhanced Select2 initialization
+    if (typeof $ !== 'undefined') {
+        $('.materials-select2').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search and select materials...',
+            allowClear: true,
+            width: '100%',
+            minimumInputLength: 2, // Only start searching after 2 characters
+            maximumSelectionLength: 20, // Limit selection to 20 items
+            ajax: {
+                delay: 250, // Wait 250ms after typing stops before sending request
+                url: '/api/materials/search/', // You'll need to create this endpoint
+                dataType: 'json',
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function (data, params) {
+                    params.page = params.page || 1;
+                    return {
+                        results: data.items,
+                        pagination: {
+                            more: data.has_more
+                        }
+                    };
+                },
+                cache: true
+            },
+            templateResult: formatMaterial,
+            templateSelection: formatMaterialSelection
+        });
+
+        // Clear selection when form changes
+        roleRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                $('.materials-select2').val(null).trigger('change');
+            });
+        });
+    }
+
+    let selectedMaterials = new Set();
+    
+    // Load materials on category click
+    document.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', function() {
+            loadMaterials(this.dataset.category);
+            document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // Material search
+    let searchTimeout;
+    document.getElementById('materialSearch').addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            loadMaterials('all', e.target.value);
+        }, 300);
+    });
+
+    function loadMaterials(category, search = '') {
+        fetch(`/api/materials/?category=${category}&search=${search}`)
+            .then(response => response.json())
+            .then(data => {
+                const materialsListEl = document.getElementById('materialsList');
+                materialsListEl.innerHTML = data.materials.map(material => `
+                    <div class="material-item ${selectedMaterials.has(material.id) ? 'selected' : ''}" 
+                         data-id="${material.id}" 
+                         data-name="${material.name}">
+                        ${material.name}
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                materialsListEl.querySelectorAll('.material-item').forEach(item => {
+                    item.addEventListener('click', () => toggleMaterial(item));
+                });
+            });
+    }
+
+    function toggleMaterial(item) {
+        const id = item.dataset.id;
+        const name = item.dataset.name;
+        
+        if (selectedMaterials.has(id)) {
+            selectedMaterials.delete(id);
+            item.classList.remove('selected');
+        } else if (selectedMaterials.size < 20) {
+            selectedMaterials.add(id);
+            item.classList.add('selected');
+        }
+        
+        updateSelectedMaterials();
+    }
+
+    function updateSelectedMaterials() {
+        const container = document.getElementById('selectedMaterials');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        container.innerHTML = Array.from(selectedMaterials).map(id => {
+            const el = document.querySelector(`.material-item[data-id="${id}"]`);
+            return `
+                <div class="selected-material-tag" data-id="${id}">
+                    ${el.dataset.name}
+                    <span class="remove-material" onclick="removeMaterial('${id}')">×</span>
+                </div>
+            `;
+        }).join('');
+        
+        selectedCount.textContent = selectedMaterials.size;
+        
+        // Update hidden inputs for both forms
+        document.querySelectorAll('select[name="materials"]').forEach(select => {
+            select.value = Array.from(selectedMaterials);
+        });
+    }
+
+    window.removeMaterial = function(id) {
+        const item = document.querySelector(`.material-item[data-id="${id}"]`);
+        if (item) {
+            item.classList.remove('selected');
+        }
+        selectedMaterials.delete(id);
+        updateSelectedMaterials();
+    }
+
+    // Initial load
+    loadMaterials('all');
+});
+
+// Format the material in dropdown
+function formatMaterial(material) {
+    if (!material.id) return material.text;
+    return $('<span>', {
+        text: material.text,
+        title: material.description || material.text
+    });
+}
+
+// Format the selected material
+function formatMaterialSelection(material) {
+    return material.text;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const materialCheckboxes = document.querySelectorAll('.material-checkbox');
+    const selectedCountEl = document.getElementById('selected-count');
+    const searchInput = document.getElementById('material-search');
+    const hiddenInputSeller = document.getElementById('selected_materials_input');
+    const hiddenInputCompany = document.getElementById('selected_materials_input_company');
+    
+    // Handle checkbox changes
+    materialCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const selectedMaterials = Array.from(document.querySelectorAll('.material-checkbox:checked'))
+                                         .map(cb => cb.value);
+            
+            if (selectedMaterials.length > 20) {
+                this.checked = false;
+                alert('You can select maximum 20 materials');
+                return;
+            }
+            
+            // Update count
+            selectedCountEl.textContent = selectedMaterials.length;
+            
+            // Update hidden inputs for both forms
+            hiddenInputSeller.value = selectedMaterials.join(',');
+            hiddenInputCompany.value = selectedMaterials.join(',');
+        });
+    });
+
+    // Handle search
+    searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        document.querySelectorAll('.material-item').forEach(item => {
+            const materialName = item.querySelector('label').textContent.toLowerCase();
+            item.style.display = materialName.includes(searchTerm) ? '' : 'none';
+        });
+    });
+
+    // Handle form submissions
+    const sellerForm = document.getElementById('sellerForm');
+    const companyForm = document.getElementById('companyForm');
+    
+    [sellerForm, companyForm].forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const selectedMaterials = Array.from(document.querySelectorAll('.material-checkbox:checked'))
+                                         .map(cb => cb.value);
+            
+            if (selectedMaterials.length === 0) {
+                e.preventDefault();
+                alert('Please select at least one material');
+                return;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
